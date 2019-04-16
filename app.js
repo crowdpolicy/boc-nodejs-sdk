@@ -11,7 +11,9 @@ var http = require('http'),
 // Create global app object
 var app = express();
 
-boc_api.get_app_token(function(err,new_boc_api){
+boc_api.init();
+
+/*boc_api.get_app_token(function(err,new_boc_api){
   if(err){
     console.log(err)
   }else{
@@ -28,7 +30,7 @@ boc_api.get_app_token(function(err,new_boc_api){
     }
   }
   
-});
+});*/
 
 
 app.use(cors());

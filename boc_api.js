@@ -4,6 +4,9 @@ var fs = require('fs');
 const cache_path = "api_cache.json";
 boc_api = {};
 
+/*
+API constants.
+*/
 boc_api.base_api_url = "https://sandbox-apis.bankofcyprus.com/df-boc-org-sb/sb/psd2"
 boc_api.client_id = "9eb70bc5-f0b1-4da3-ae92-3fde2854e035"
 boc_api.client_secret = "G4oS6nY1fU5aW3wX0bQ8hR1uS5dP4rQ7rE6tS6aL4oA8sG0gC8"
@@ -15,32 +18,16 @@ boc_api.sub_id = "";
 boc_api.access_token= "";
 boc_api.token_expires = "";
 
-
-cache_object = readCacheApiObject();
-if(cache_object){
-    boc_api = cache_object;
-}
-
-
-function cacheApiObject(){
-    fs.writeFileSync(cache_path,JSON.stringify(boc_api));
-}
-function readCacheApiObject(){
-    if(fs.existsSync(cache_path)){
-        return JSON.parse(fs.readFileSync(cache_path));
-    }else{
-        return false;
-    }
-}
-
+//A helper function used every time we want to post data to the API 
 function post(url,data,headers,callback){
+    //check if given destination url starts with a trailing dash and if true, prepend the API base url
     if(url.charAt(0) === "/"){
         url = boc_api.base_api_url + url;
     }else{
         url = url;
     }
     
-    
+    //if the headers object is not set, we should send a Content-Type header to avoid server errors
     if(!headers){
         request.post( url,
         {
@@ -57,15 +44,17 @@ function post(url,data,headers,callback){
         }, callback);
     }
 }
+//A helper function used every time we want to make a GET request to the API 
 function get(url,headers,callback){
     var options = {
         url: boc_api.base_api_url+url,
         method: 'GET',
         headers: headers
     }
-    request(options,callback)
+    request(options,callback)  
 }
 
+//A helper function used every time we want to make a PATCH request to the API 
 function patch(url,data,headers,callback){
     request.patch(boc_api.base_api_url+url,
     {
@@ -75,43 +64,94 @@ function patch(url,data,headers,callback){
 }
 
 
+//Used to save the current boc_api values Such as subscriptionId, access_token etc.
+boc_api.cacheApiObject = function(){
+    //Stringify and save the boc_api object. The result JSON will only have the String values of the source object
+    fs.writeFileSync(cache_path,JSON.stringify(boc_api));
+}
 
-boc_api.get_app_token = function(callback){
-    if(!boc_api.access_token.length || Date.now() > boc_api.token_expires){
-        var data = {
-            "client_id": boc_api.client_id,
-            "client_secret": boc_api.client_secret,
-            "grant_type":"client_credentials",
-            "scope":"TPPOAuth2Security"
-        }
-        post("/oauth2/token", data,null,function(error, response, body) {
-            if (error) {
-                if(callback){
-                    callback(error,null)
-                }
-            } else {
-                
-                token_response = JSON.parse(body)
-                console.log(token_response);
-                boc_api.token_expires = Date.now()+(token_response.expires_in *1000);
-                if(token_response.access_token){
-                    console.log("[Got Token]")
-                    access_token = token_response.access_token
-                    boc_api.access_token = token_response.access_token
-                    cacheApiObject()
-
-                    if(callback){
-                        callback(null,boc_api);
-                    }
-
-                }else{
-                    callback(token_response,null)
-                }
-            }
-        })   
+//Used to read a previews status of boc_api. Reads a JSON file loading boc_api values
+boc_api.readCacheApiObject = function(){
+    //check if the cache file exists and return it's objects.
+    if(fs.existsSync(cache_path)){
+        return JSON.parse(fs.readFileSync(cache_path));
     }else{
-      callback(null,boc_api)  
+        return false;
     }
+}
+
+//Library init.
+boc_api.init = function(callback){
+    //Load the cache object
+    cache_object = boc_api.readCacheApiObject();
+    if(cache_object){
+        boc_api = {...boc_api, ...cache_object};
+    }
+
+    if(!boc_api.access_token || Date.now() > boc_api.token_expires){
+        boc_api.get_access_token().then(new_acc_token => {
+                boc_api.access_token = new_acc_token;
+        }).catch(error => console.log(error));
+        
+    }
+    //we have an active token
+    //TODO: use an API call to verify.
+    boc_api.checkAndCreateSubId().then(sub_id =>{
+        let login_url = boc_api.get_login_url(sub_id)
+        console.log("LOGIN URL: "+login_url)  
+    })
+}
+
+
+
+boc_api.checkAndCreateSubId = function(){
+    return new Promise((resolve, reject) => {
+        if(boc_api.sub_id.length === 0){
+            boc_api.createSubscription().then(sub_id => {
+                boc_api.sub_id = sub_id;
+                resolve(sub_id)
+            })
+        }
+    })
+}
+
+//TODO: Comment this method
+boc_api.get_access_token = function(){
+    return new Promise((resolve, reject) => {
+        //Check if the app access token has expired and get a new one if needed.
+        if(!boc_api.access_token.length || Date.now() > boc_api.token_expires){
+            var data = {
+                "client_id": boc_api.client_id,
+                "client_secret": boc_api.client_secret,
+                "grant_type":"client_credentials",
+                "scope":"TPPOAuth2Security"
+            }
+            post("/oauth2/token", data,null,function(error, response, body) {
+                if (error) {
+                        reject(error);
+
+                } else {
+                    
+                    token_response = JSON.parse(body)
+                    console.log(token_response);
+                    boc_api.token_expires = Date.now()+(token_response.expires_in *1000);
+                    if(token_response.access_token){
+                        console.log("[Got Token]")
+                        access_token = token_response.access_token
+                        boc_api.access_token = token_response.access_token
+                        boc_api.cacheApiObject()
+                        resolve(boc_api);
+                            
+                    }else{
+                        reject(token_response,null)
+                    }
+                }
+            })   
+        }else{
+          resolve(boc_api)  
+        }
+     }
+   );   
     
 }
 
@@ -134,41 +174,45 @@ boc_api.tokenStatus = function(token){
 
 }
 
-boc_api.createSubscription = function(callback){
-    var data = {
+boc_api.createSubscription = function(){
+    return new Promise((resolve, reject) => {
+        var data = {
             "accounts": {
-            "transactionHistory": true,
-            "balance": true,
-            "details": true,
-            "checkFundsAvailability": true
+                "transactionHistory": true,
+                "balance": true,
+                "details": true,
+                "checkFundsAvailability": true
             },
             "payments": {
-            "limit": 99999999,
-            "currency": "EUR",
-            "amount": 999999999
+                "limit": 99999999,
+                "currency": "EUR",
+                "amount": 999999999
             }
-    }
-    var headers = {
-        "Authorization":"Bearer "+boc_api.access_token,
-        "Content-Type":"application/json",
-        "app_name":"myapp",
-        "tppid": boc_api.tppid,
-        "originUserId":"abc",
-        "timeStamp":Date.now(),
-        "journeyId":"abc"
-    }
-    var url = "/v1/subscriptions?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret
-    post(url,data,headers,function(err,response,body){
-        if(err){
-            callback(err,null)
-        }else{
-            subBody = body
-            sub_Id = subBody.subscriptionId
-            console.log("[GOT SUB_ID]")
-            boc_api.sub_id = sub_Id
-            callback(null,sub_Id)
         }
+        var headers = {
+            "Authorization":"Bearer "+boc_api.access_token,
+            "Content-Type":"application/json",
+            "app_name":"myapp",
+            "tppid": boc_api.tppid,
+            "originUserId":"abc",
+            "timeStamp":Date.now(),
+            "journeyId":"abc"
+        }
+        var url = "/v1/subscriptions?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret
+        post(url,data,headers,function(err,response,body){
+            if(err){
+                reject(err)
+            }else{
+                subBody = body
+                sub_Id = subBody.subscriptionId
+                console.log("[GOT SUB_ID]")
+                boc_api.sub_id = sub_Id
+                resolve(sub_Id)
+            }
+        })
+    
     })
+
 }
 
 boc_api.get_login_url = function(subId){
@@ -180,71 +224,82 @@ boc_api.get_login_url = function(subId){
 }
 
 boc_api.getOAuthCode2 = function(code){
-    var data = {
-        "client_id":boc_api.client_id,
-        "client_secret":boc_api.client_secret,
-        "grant_type":"authorization_code",
-        "scope":"UserOAuth2Security",
-        "code":code
-    }
-    post("/oauth2/token",data,null,function(err,response,body){
-        oauthcode2 = JSON.parse(body)
-        console.log("[GOT User Approval Code]")
-        boc_api.oauthCode2 = oauthcode2
-        boc_api.getSubIdInfo(boc_api.sub_id,oauthcode2.access_token)
+    return new Promise((resolve, reject) => {    
+        var data = {
+            "client_id":boc_api.client_id,
+            "client_secret":boc_api.client_secret,
+            "grant_type":"authorization_code",
+            "scope":"UserOAuth2Security",
+            "code":code
+        }
+        post("/oauth2/token",data,null,function(err,response,body){
+            if(err){
+                reject(err)
+            }
+            oauthcode2 = JSON.parse(body)
+            console.log("[GOT User Approval Code]")
+            boc_api.oauthCode2 = oauthcode2
+            resolve(oauthcode2)
+        })
     })
 }
 
 boc_api.getSubIdInfo = function(subId,oauthcode2){
-    var url = "/v1/subscriptions/"+subId+"?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret;
-    var headers = {
-        "Authorization":"Bearer "+boc_api.access_token,
-        "Content-Type":"application/json",
-        "originUserId":"abc",
-        "tppId":boc_api.tppid,
-        "timestamp":Date.now(),
-        "journeyId":"abc"
-    }
-    get(url,headers,function(err,response,body){
-        subscription_info = JSON.parse(body)
-        boc_api.updateSubId(subId,oauthcode2,subscription_info[0].selectedAccounts)
-    })
-    
+    return new Promise((resolve, reject) => {
+        var url = "/v1/subscriptions/"+subId+"?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret;
+        var headers = {
+            "Authorization":"Bearer "+boc_api.access_token,
+            "Content-Type":"application/json",
+            "originUserId":"abc",
+            "tppId":boc_api.tppid,
+            "timestamp":Date.now(),
+            "journeyId":"abc"
+        }
+        get(url,headers,function(err,response,body){
+            if(err){
+                reject(err);
+            }
+            subscription_info = JSON.parse(body)
+            resolve(subscription_info)
+        })
+    })    
 }
 
 boc_api.updateSubId = function(subId,oauthcode2,selectedAccounts){
-    var data = {
-        "selectedAccounts": selectedAccounts,
-        "accounts": {
-            "transactionHistory": true,
-            "balance": true,
-            "details": true,
-            "checkFundsAvailability": true
-        },
-        "payments": {
-            "limit": 8.64181767,
-            "currency": "EUR",
-            "amount": 93.21948702
+    return new Promise((resolve, reject) => {
+
+        var data = {
+            "selectedAccounts": selectedAccounts,
+            "accounts": {
+                "transactionHistory": true,
+                "balance": true,
+                "details": true,
+                "checkFundsAvailability": true
+            },
+            "payments": {
+                "limit": 8.64181767,
+                "currency": "EUR",
+                "amount": 93.21948702
+            }
         }
-    }
-    var headers= {
-        "Authorization":"Bearer "+oauthcode2,
-        "Content-Type":"application/json",
-        "app_name":"myapp",
-        "tppid":boc_api.tppid,
-        "originUserId":"abc",
-        "timeStamp":Date.now(),
-        "journeyId":"abc"
-    }
-    
-    var url = "/v1/subscriptions/"+subId+"?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret;
-    patch(url,data,headers,function(err,response,body){
-        if(body.error){
-            console.log(body.error.additionalDetails)
-        }else{
-            boc_api.subStatus = body;
-            cacheApiObject()
+        var headers= {
+            "Authorization":"Bearer "+oauthcode2,
+            "Content-Type":"application/json",
+            "app_name":"myapp",
+            "tppid":boc_api.tppid,
+            "originUserId":"abc",
+            "timeStamp":Date.now(),
+            "journeyId":"abc"
         }
+        
+        var url = "/v1/subscriptions/"+subId+"?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret;
+        patch(url,data,headers,function(err,response,body){
+            if(err){
+                reject(err)
+            }else{
+                resolve(body)
+            }
+        })
     })
 }
 
