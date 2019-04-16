@@ -11,7 +11,25 @@ var http = require('http'),
 // Create global app object
 var app = express();
 
-boc_api.get_app_token();
+boc_api.get_app_token(function(err,new_boc_api){
+  if(err){
+    console.log(err)
+  }else{
+    boc_api = new_boc_api;
+    if(boc_api.sub_id.length === 0){
+      boc_api.createSubscription(function(err,sub_id){
+        if(err){
+          console.log(err)
+        }else{
+          let login_url = boc_api.get_login_url(sub_Id)
+          console.log("LOGIN URL: "+login_url)
+        }
+      })
+    }
+  }
+  
+});
+
 
 app.use(cors());
 

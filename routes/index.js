@@ -2,7 +2,12 @@ var router = require('express').Router();
 
 
 router.get('/',function(req,res,next){
-    res.send(boc_api)
+    if(boc_api && boc_api.subStatus.status === "ACTV" && boc_api.subStatus.selectedAccounts.length > 0){
+        res.send(boc_api)
+    }else{
+        res.send("<a href='"+boc_api.get_login_url()+"'>Connect a BOC Account</a>");
+    }
+    
 })
 
 router.get('/accounts',function(req,res,next){
@@ -47,26 +52,33 @@ router.get('/pay',function(req,res,next){
         if(err){
             res.send(err)
         }else{
+            console.log(data)
             //first we sign the payment payload
-            boc_api.signPaymentRequest(data[0].accountId,data[1].accountId,10,"SDK test payment",function(err,data){
-                if(err){
-                    res.send(err)
-                }else{
-                    //res.send(data)
-                    boc_api.createPayment(data,function(err,paymentResult){
-                        if(err){res.send(err)}
-                        else{
-                            
-                            boc_api.approvePayment(paymentResult.payment.paymentId,function(err,paymentAuthorizeResult){
-                                if(err){res.send(err)}
-                                else{
-                                    res.send(paymentAuthorizeResult)
-                                }
-                            })
-                        }
-                    })
-                }
-            })
+            if(data[0].accountId,data[1].accountId){
+
+                
+                boc_api.signPaymentRequest(data[0].accountId,data[1].accountId,10,"SDK test payment",function(err,data){
+                    if(err){
+                        res.send(err)
+                    }else{
+                        //res.send(data)
+                        boc_api.createPayment(data,function(err,paymentResult){
+                            if(err){res.send(err)}
+                            else{
+                                
+                                boc_api.approvePayment(paymentResult.payment.paymentId,function(err,paymentAuthorizeResult){
+                                    if(err){res.send(err)}
+                                    else{
+                                        res.send(paymentAuthorizeResult)
+                                    }
+                                })
+                            }
+                        })
+                    }
+                })
+            }else{
+                res.send({result:"error", message:"the API object must have access to atleast 2 accounts to perform this call. You will need to assign a accountId manually otherwise"})
+            }
             /*
             var payload = {
                 "debtor": {

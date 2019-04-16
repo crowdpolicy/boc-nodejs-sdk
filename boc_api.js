@@ -13,6 +13,7 @@ boc_api.subStatus = {};
 boc_api.oauthCode2 = "";
 boc_api.sub_id = ""; 
 boc_api.access_token= "";
+boc_api.token_expires = "";
 
 
 cache_object = readCacheApiObject();
@@ -75,8 +76,8 @@ function patch(url,data,headers,callback){
 
 
 
-boc_api.get_app_token = function(){
-    if(!boc_api.sub_id){
+boc_api.get_app_token = function(callback){
+    if(!boc_api.access_token.length || Date.now() > boc_api.token_expires){
         var data = {
             "client_id": boc_api.client_id,
             "client_secret": boc_api.client_secret,
@@ -85,24 +86,55 @@ boc_api.get_app_token = function(){
         }
         post("/oauth2/token", data,null,function(error, response, body) {
             if (error) {
-                console.log(error)
+                if(callback){
+                    callback(error,null)
+                }
             } else {
                 
                 token_response = JSON.parse(body)
+                console.log(token_response);
+                boc_api.token_expires = Date.now()+(token_response.expires_in *1000);
                 if(token_response.access_token){
                     console.log("[Got Token]")
                     access_token = token_response.access_token
-                    boc_api.createSubscription(token_response.access_token)
+                    boc_api.access_token = token_response.access_token
+                    cacheApiObject()
+
+                    if(callback){
+                        callback(null,boc_api);
+                    }
+
                 }else{
-                    console.log(token_response)
+                    callback(token_response,null)
                 }
             }
         })   
+    }else{
+      callback(null,boc_api)  
     }
     
 }
 
-boc_api.createSubscription = function(accesstoken){
+boc_api.tokenStatus = function(token){
+    var data = {
+        "client_id": boc_api.client_id,
+        "client_secret": boc_api.client_secret,
+        "token": token,
+        "token_type_hint":"access_token"
+    }
+    post("/oauth2/introspect",null,function(error, response, body) {
+        if (error) {
+            if(callback){
+                callback(error,null)
+            }
+        } else {
+            console.log(body)
+        }
+    })
+
+}
+
+boc_api.createSubscription = function(callback){
     var data = {
             "accounts": {
             "transactionHistory": true,
@@ -116,9 +148,8 @@ boc_api.createSubscription = function(accesstoken){
             "amount": 999999999
             }
     }
-    boc_api.access_token = accesstoken
     var headers = {
-        "Authorization":"Bearer "+accesstoken,
+        "Authorization":"Bearer "+boc_api.access_token,
         "Content-Type":"application/json",
         "app_name":"myapp",
         "tppid": boc_api.tppid,
@@ -128,17 +159,24 @@ boc_api.createSubscription = function(accesstoken){
     }
     var url = "/v1/subscriptions?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret
     post(url,data,headers,function(err,response,body){
-        subBody = body
-        sub_Id = subBody.subscriptionId
-        console.log("[GOT SUB_ID]")
-        boc_api.sub_id = sub_Id
-        boc_api.get_login_url(sub_Id)
+        if(err){
+            callback(err,null)
+        }else{
+            subBody = body
+            sub_Id = subBody.subscriptionId
+            console.log("[GOT SUB_ID]")
+            boc_api.sub_id = sub_Id
+            callback(null,sub_Id)
+        }
     })
 }
 
 boc_api.get_login_url = function(subId){
+    if(!subId){
+        subId = boc_api.sub_id
+    }
     usrLoginUrl = boc_api.base_api_url+"/oauth2/authorize?response_type=code&redirect_uri=http://localhost:3000/bocOauthcb&scope=UserOAuth2Security&client_id="+boc_api.client_id+"&subscriptionid="+subId
-    console.log("Login to boc: "+usrLoginUrl)
+    return usrLoginUrl;
 }
 
 boc_api.getOAuthCode2 = function(code){
@@ -175,7 +213,6 @@ boc_api.getSubIdInfo = function(subId,oauthcode2){
 }
 
 boc_api.updateSubId = function(subId,oauthcode2,selectedAccounts){
-    console.log("[UPDATING SUB_ID] : "+subId)
     var data = {
         "selectedAccounts": selectedAccounts,
         "accounts": {
@@ -205,7 +242,6 @@ boc_api.updateSubId = function(subId,oauthcode2,selectedAccounts){
         if(body.error){
             console.log(body.error.additionalDetails)
         }else{
-            console.log(body)
             boc_api.subStatus = body;
             cacheApiObject()
         }
