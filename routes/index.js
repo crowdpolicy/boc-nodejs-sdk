@@ -3,7 +3,7 @@ var router = require('express').Router();
 
 router.get('/',function(req,res,next){
     if(boc_api && boc_api.subStatus.status === "ACTV" && boc_api.subStatus.selectedAccounts.length > 0){
-        res.send(boc_api)
+        res.send(JSON.stringify(boc_api))
     }else{
         res.send("<a href='"+boc_api.get_login_url()+"'>Connect a BOC Account</a>");
     }

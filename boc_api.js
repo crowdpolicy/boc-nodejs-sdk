@@ -81,7 +81,7 @@ boc_api.readCacheApiObject = function(){
 }
 
 //Library init.
-boc_api.init = function(callback){
+boc_api.init = async function(callback){
     //Load the cache object
     cache_object = boc_api.readCacheApiObject();
     if(cache_object){
@@ -89,17 +89,17 @@ boc_api.init = function(callback){
     }
 
     if(!boc_api.access_token || Date.now() > boc_api.token_expires){
-        boc_api.get_access_token().then(new_acc_token => {
-                boc_api.access_token = new_acc_token;
-        }).catch(error => console.log(error));
+        boc_api.access_token = await boc_api.get_access_token()
         
     }
+        boc_api.checkAndCreateSubId().then(sub_id =>{
+            let login_url = boc_api.get_login_url(sub_id)
+            console.log("LOGIN URL: "+login_url)  
+        })
+    
     //we have an active token
     //TODO: use an API call to verify.
-    boc_api.checkAndCreateSubId().then(sub_id =>{
-        let login_url = boc_api.get_login_url(sub_id)
-        console.log("LOGIN URL: "+login_url)  
-    })
+    
 }
 
 
@@ -133,14 +133,13 @@ boc_api.get_access_token = function(){
                 } else {
                     
                     token_response = JSON.parse(body)
-                    console.log(token_response);
                     boc_api.token_expires = Date.now()+(token_response.expires_in *1000);
                     if(token_response.access_token){
                         console.log("[Got Token]")
                         access_token = token_response.access_token
                         boc_api.access_token = token_response.access_token
                         boc_api.cacheApiObject()
-                        resolve(boc_api);
+                        resolve(boc_api.access_token);
                             
                     }else{
                         reject(token_response,null)
