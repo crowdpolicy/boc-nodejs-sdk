@@ -10,6 +10,50 @@ router.get('/',function(req,res,next){
     
 })
 
+router.get("/getAccountsInSub", function(req,res,next){
+    if(req.query.accountId){
+        boc_api.getSubForAccount(req.query.accountId).then(subForAccount =>{
+            res.send(subForAccount)
+        })
+    }else{
+        res.send({error:"missing accountId"})
+    }
+   
+})
+
+router.get('/account/fundAvailability', function(req,res,next){
+    if(req.query.accountId){
+        boc_api.fundAvailability(req.query.accountId).then(response =>{
+            res.send(response)
+        })
+    }else{
+        res.send({error:"missing accountId"})
+    }
+    
+})
+
+router.get('/account/statements', function(req,res,next){
+    if(req.query.accountId){
+        boc_api.getAccountStatements(req.query.accountId).then(accountStatements =>{
+            res.send(accountStatements)
+        })
+    }else{
+        res.send({error:"missing accountId"})
+    }
+    
+})
+
+router.get('/account/balance', function(req,res,next){
+    if(req.query.accountId){
+        boc_api.getAvailBalanceForAccount(req.query.accountId).then(accountBalance =>{
+            res.send(accountBalance)
+        })
+    }else{
+        res.send({error:"missing accountId"})
+    }
+    
+})
+
 router.get('/accounts',function(req,res,next){
     boc_api.getAccounts(function(err,data){
         if(err){
@@ -45,6 +89,17 @@ router.get('/accounts/:accountid',function(req,res,next){
         })
     })
     
+})
+
+router.get("/payment",function(req,res,next){
+    if(req.query.paymentId){
+        boc_api.getPaymentDetails(req.query.paymentId).then(paymentDetails =>{
+            res.send(paymentDetails)
+        })
+    }else{
+        res.send({error:"missing paymentId"})
+    }
+
 })
 
 router.get('/pay',function(req,res,next){

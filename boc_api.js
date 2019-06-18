@@ -115,6 +115,151 @@ boc_api.checkAndCreateSubId = function(){
     })
 }
 
+// Get subscriptions for account
+boc_api.getSubForAccount = function(accountId){
+    
+    return new Promise((resolve, reject) => {
+        var url = "/v1/subscriptions/accounts/"+accountId+"?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret;
+        var headers = {
+            "Authorization":"Bearer "+boc_api.access_token,
+            "Content-Type":"application/json",
+            "originUserId":"abc",
+            "tppId":boc_api.tppid,
+            "timestamp":Date.now(),
+            "journeyId":"abc"
+        }
+        get(url,headers,function(err,response,body){
+            if(err){
+                reject(err);
+            }
+            subForAccount = JSON.parse(body)
+            resolve(subForAccount)
+        })
+    })    
+
+}
+
+
+
+// Get available balance
+boc_api.getAvailBalanceForAccount = function(accountId){
+    
+    return new Promise((resolve, reject) => {
+        if(boc_api.sub_id){
+            var url = "/v1/accounts/"+accountId+"/balance?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret;
+            var headers = {
+                "Authorization":"Bearer "+boc_api.access_token,
+                "Content-Type":"application/json",
+                "originUserId":"abc",
+                "tppId":boc_api.tppid,
+                "timestamp":Date.now(),
+                "journeyId":"abc",
+                "subscriptionId":boc_api.sub_id
+            }
+            get(url,headers,function(err,response,body){
+                if(err){
+                    reject(err);
+                }
+                subForAccount = JSON.parse(body)
+                resolve(subForAccount)
+            })
+        }else{ reject("missing subid")}
+    })    
+
+}
+
+
+// Get account statement
+boc_api.getAccountStatements = function(accountId,startDate="01/01/2016",endDate="31/12/2018",maxCount=0){
+    
+    return new Promise((resolve, reject) => {
+        if(boc_api.sub_id){
+            var url = "/v1/accounts/"+accountId+"/statement?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret+"&startDate="+startDate+"&endDate="+endDate+"&maxCount="+maxCount;
+            var headers = {
+                "Authorization":"Bearer "+boc_api.access_token,
+                "Content-Type":"application/json",
+                "originUserId":"abc",
+                "tppId":boc_api.tppid,
+                "timestamp":Date.now(),
+                "journeyId":"abc",
+                "subscriptionId":boc_api.sub_id
+            }
+            get(url,headers,function(err,response,body){
+                if(err){
+                    reject(err);
+                }
+                accountStatements = JSON.parse(body)
+                resolve(accountStatements)
+            })
+        }else{ reject("missing subid")}
+    })    
+
+}
+
+// Fund availability
+boc_api.fundAvailability = function(accountId,amount=100,bankId="abc",currency="EUR",currencyRate=60){
+    return new Promise((resolve, reject) => {
+            
+            var data = { 
+                "bankId": bankId,
+                    "accountId": accountId,
+                    
+                    "transaction": {
+                    "amount": amount,
+                    "currency": currency,
+                    "currencyRate": currencyRate
+                }
+            }
+            var headers = {
+                "Authorization":"Bearer "+boc_api.access_token,
+                "Content-Type":"application/json",
+                "app_name":"myapp",
+                "tppid": boc_api.tppid,
+                "subscriptionId":boc_api.sub_id,
+                "originUserId":"abc",
+                "timeStamp":Date.now(),
+                "journeyId":"abc"
+            }
+
+            post("/v1/payments/fundAvailability?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret, data,headers,function(error, response, body) {
+                if (error) {
+                        reject(error);
+                } else { 
+                    console.log(response)
+                    //responseStatus = JSON.parse(body)
+                    resolve(body);
+                }
+            }) 
+     }
+   );   
+}
+// Get payment details
+boc_api.getPaymentDetails = function(paymentId){
+    return new Promise((resolve, reject) => {
+        if(boc_api.sub_id){
+            var url = "/v1/payments/"+paymentId+"?client_id="+boc_api.client_id+"&client_secret="+boc_api.client_secret;
+            var headers = {
+                "Authorization":"Bearer "+boc_api.access_token,
+                "Content-Type":"application/json",
+                "originUserId":"abc",
+                "tppId":boc_api.tppid,
+                "timestamp":Date.now(),
+                "journeyId":"abc",
+                "subscriptionId":boc_api.sub_id
+            }
+            get(url,headers,function(err,response,body){
+                if(err){
+                    reject(err);
+                }
+                paymentDetails = JSON.parse(body)
+                resolve(paymentDetails)
+            })
+        }else{ reject("missing subid")}
+    })    
+
+}
+
+
 //TODO: Comment this method
 boc_api.get_access_token = function(){
     return new Promise((resolve, reject) => {
