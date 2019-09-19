@@ -1,0 +1,22 @@
+<div style="width: 100%; text-align: center">
+    <h1>Payment information</h1>
+    <h2>Status of the payment</h2>
+    
+    <br>
+    <br>
+
+    <h3>Status: <%= result.code %></h3>
+    <h3>Description: <%= result.description %></h3>
+
+    <hr>
+    <hr>
+
+    <button onclick="location.href = '/'">Go back</button>
+</div>
+
+<script>
+setTimeout(
+    function() {
+      location.href = '/'
+    }, 5000);
+</script>

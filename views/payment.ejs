@@ -1,0 +1,30 @@
+<div style="width: 100%; text-align: center">
+    <h1>Payment details</h1>
+    <h2>Details for payment: <%= payment.paymentId %> </h2>
+    
+    <br>
+    <br>
+
+    <h3> Payment Details: <%= payment.paymentDetails %> </h3>
+    <h3> Payment status: <%= payment.status.code %> </h3>
+    <h4><%= payment.status.description %> </h4>
+
+
+    <hr>
+
+    <h3> Debtor: <%= payment.debtor.accountId %> </h3>
+    <h3> Creditor: <%= payment.creditor.accountId %> </h3>
+    <h3> Amount: <%= payment.transactionAmount.amount %> <%= payment.transactionAmount.currency %> </h3>
+
+    <hr>
+
+    <h3> Payment execution date: <%= payment.executionDate %> </h3>
+    <h3> Payment value date: <%= payment.valueDate %> </h3>
+
+    <br>
+
+    <hr>
+    <hr>
+
+    <button onclick="location.href = '/'">Go back</button>
+</div>

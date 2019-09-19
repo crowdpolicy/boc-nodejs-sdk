@@ -1,0 +1,26 @@
+<div style="width: 100%; text-align: center">
+    <h1>Available accounts</h1>
+    <h2>Statements for account: <%= statements.account.accountId %> </h2>
+    
+    <br>
+
+    <button onclick="location.href = '/'">Go back</button>
+
+    <br>
+
+    <% for (transaction of statements.transaction) { %>
+
+    <h3> <%= JSON.stringify(transaction) %> </h3>
+    <h3> Transaction ID: <%= transaction.id %> </h3>
+    <h3> Transaction amount: <%= transaction.transactionAmount.amount %> <%= transaction.transactionAmount.currency %></h3>
+    <h3> Transaction description: <%= transaction.description %> </h3>
+    <h3> Transaction type: <%= transaction.transactionType %> </h3>
+    <h3> Transaction merchant name: <%= transaction.merchant.name %> </h3>
+    <h3> Transaction value date: <%= transaction.valueDate %> </h3>
+    
+    <hr>
+
+    <% } %>
+
+    <br>
+</div>
