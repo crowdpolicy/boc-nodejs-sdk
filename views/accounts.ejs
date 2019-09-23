@@ -1,3 +1,11 @@
+<link rel="stylesheet" type="text/css" href="/css/style.css">
+
+<div style="width: 100%; text-align: center">
+    <div class="header">
+        <img src="/img/sdk_boc_logo.png">
+    </div>
+    <hr>
+
 <div style="width: 100%; text-align: center">
     <h1>Available accounts</h1>
     <h2>Accounts that user consented</h2>
@@ -7,14 +15,15 @@
 
     <% for (account of accounts) { %>
 
-    <h3> <%= account[0].accountName %> <%= account[0].IBAN %> <%= account[0].accountId %> </h3>
+    <h3> <%= account[0].accountName %> -  <%= account[0].IBAN %> -  <%= account[0].accountId %> </h3>
 
     <% } %>
 
     <br>
 
     <hr>
-    <hr>
+    <br>
 
     <button onclick="location.href = '/'">Go back</button>
+</div>
 </div>

@@ -1,12 +1,15 @@
-<div style="width: 100%; text-align: center">
-    <h1>BoC SDK test app</h1>
+<link rel="stylesheet" type="text/css" href="/css/style.css">
 
-    <br>
-    <br>
+<div style="width: 100%; text-align: center">
+    <div class="header">
+        <img src="/img/sdk_boc_logo.png">
+    </div>
+    <hr>
 
     <% if(boc_api.subStatus.status == "ACTV" && boc_api.subStatus.selectedAccounts.length > 0){ %>
 
-    <button onclick="location.href = '/accounts'">Get available accounts</button>
+    <br>
+    <button  onclick="location.href = '/accounts'">Get available accounts</button>
     
     <br>
     <br>
@@ -15,36 +18,48 @@
 
     <br>
 
-    Account ID: <input type="text" id="accountId">
-    <br> 
-    <button onclick="location.href = '/accounts/' + document.getElementById('accountId').value">Get account details</button>
-    <button onclick="location.href = '/accounts/' + document.getElementById('accountId').value + '/balances'">Get account balnces</button>
-    <button onclick="location.href = '/accounts/' + document.getElementById('accountId').value + '/statements'">Get account statements</button>
-
+    <div class="container">
+    <a >Account ID: </a><input type="text" id="accountId" >
     <br> 
     <br>
-    <hr>
+    <button  onclick="location.href = '/accounts/' + document.getElementById('accountId').value">Get account details</button>
     <br>
-
-    Debtor's accountId: <input type="text" id="debtorIban">
     <br>
-    Creditor's accountId: <input type="text" id="creditorIban">
+    <button  onclick="location.href = '/accounts/' + document.getElementById('accountId').value + '/balances'">Get account balances</button>
     <br>
-    Amount: <input type="text" id="amount">
     <br>
-    <button onclick="location.href = '/pay?debtorIban=' + document.getElementById('debtorIban').value + '&creditorIban=' + document.getElementById('creditorIban').value + '&amount=' + document.getElementById('amount').value">Pay</button>
-
+    </div>
+    <button  onclick="location.href = '/accounts/' + document.getElementById('accountId').value + '/statements'">Get account statements</button>
     <br> 
     <br>
     <hr>
     <br>
 
-    Payment Id: <input type="text" id="paymentId">
+    <div class="container">
+    <a >Debtor's accountId:</a> <input type="text" id="debtorIban" >
     <br>
-    <button onclick="location.href = '/payment/' + document.getElementById('paymentId').value">Get payment information</button>
+    <br>
+    <a >Creditor's accountId: </a><input type="text" id="creditorIban" >
+    <br>
+    <br>
+    <a >Amount: </a><input type="text" id="amount" >
+    <br>
+    <br>
+    <br>
+    <button  onclick="location.href = '/pay?debtorIban=' + document.getElementById('debtorIban').value + '&creditorIban=' + document.getElementById('creditorIban').value + '&amount=' + document.getElementById('amount').value">Pay</button>
+    </div>
 
     <br> 
+    <hr>
     <br>
+
+    <div class="container">
+    <a >Payment Id:</a> <input type="text" id="paymentId" >
+    <br>
+    <br>
+    <button  onclick="location.href = '/payment/' + document.getElementById('paymentId').value">Get payment information</button>
+    </div>
+    <br> 
     <hr>
 
 

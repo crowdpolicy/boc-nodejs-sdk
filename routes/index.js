@@ -121,6 +121,7 @@ router.get('/accounts/:accountid', function (req, res, next) {
 router.get("/payment/:paymentId", function (req, res, next) {
     var payment_id = req.params.paymentId;
     boc_api.getPaymentDetails(payment_id).then(paymentDetails => {
+        //TODO add error if user enters invalid payment Id
         res.render('payment', {
             payment: paymentDetails
         })
@@ -133,8 +134,10 @@ router.get('/pay', function (req, res, next) {
         const debtorIban = req.query.debtorIban
         const amount = req.query.amount
 
-
-
+        if(creditorIban == debtorIban){
+            res.status(400).send('format error: please verify creditor and debtor account IDs');
+        }
+        else{
         boc_api.signPaymentRequest(creditorIban, debtorIban, amount, "SDK test payment", function (err, data) {
             if (err) {
                 res.send(err)
@@ -144,14 +147,17 @@ router.get('/pay', function (req, res, next) {
                     if (err) {
                         res.send(err)
                     } else {
-
+                        if(paymentId == null){
+                            res.status(400).send('format error: please verify creditor and debtor account IDs');
+                        }
                         console.log(paymentResult.payment.paymentId)
                         boc_api.approvePayment(paymentResult.payment.paymentId, function (err, paymentAuthorizeResult) {
                             if (err) {
                                 res.send(err)
                             } else {
                                 res.render('pay', {
-                                    result: paymentAuthorizeResult
+                                    result: paymentAuthorizeResult,
+                                    paymentId: paymentResult.payment.paymentId
                                 })
                                 // res.send(paymentAuthorizeResult)
                             }
@@ -160,6 +166,7 @@ router.get('/pay', function (req, res, next) {
                 })
             }
         })
+    }
 
         /*
         var payload = {
