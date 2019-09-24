@@ -7,15 +7,15 @@
     <hr>
 
 <div style="width: 100%; text-align: center">
-    <h1>Available accounts</h1>
-    <h2>Accounts that user consented</h2>
+    <h2>Available accounts</h2>
+    <h4>Consent to account information provided by user:</h4>
     
     <br>
     <br>
 
     <% for (account of accounts) { %>
 
-    <h3> <%= account[0].accountName %> -  <%= account[0].IBAN %> -  <%= account[0].accountId %> </h3>
+    <p> <strong><%= account[0].accountName %></strong>:   (IBAN) <%= account[0].IBAN %> -  (Account ID) <%= account[0].accountId %> </p>
 
     <% } %>
 
