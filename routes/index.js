@@ -26,8 +26,9 @@ router.get("/getAccountsInSub", function (req, res, next) {
             res.send(subForAccount)
         })
     } else {
-        res.send({
-            error: "missing accountId"
+        res.status(400)
+        res.render('error', {
+            error: 'missing information',
         })
     }
 
@@ -39,8 +40,9 @@ router.get('/account/fundAvailability', function (req, res, next) {
             res.send(response)
         })
     } else {
-        res.send({
-            error: "missing accountId"
+        res.status(400)
+        res.render('error', {
+            error: 'missing information',
         })
     }
 
@@ -109,7 +111,10 @@ router.get('/accounts/:accountid', function (req, res, next) {
                     account: Object.assign(obj, accountData[0])
                 })
             } else {
-                res.status(500).send('Error in accountId')
+                res.status(500)
+                res.render('error', {
+                    error: 'Account ID is invalid',
+                })
             }
 
             // res.send(Object.assign(obj, accountData[0]))
@@ -121,10 +126,17 @@ router.get('/accounts/:accountid', function (req, res, next) {
 router.get("/payment/:paymentId", function (req, res, next) {
     var payment_id = req.params.paymentId;
     boc_api.getPaymentDetails(payment_id).then(paymentDetails => {
-        //TODO add error if user enters invalid payment Id
-        res.render('payment', {
-            payment: paymentDetails
-        })
+        if((typeof paymentDetails.status === "undefined")){
+            res.status(400)
+            res.render('error', {
+                error: 'Invalid payment ID',
+            })
+        }
+        else{
+            res.render('payment', {
+                payment: paymentDetails
+            })
+        }
     })
 })
 
@@ -135,7 +147,10 @@ router.get('/pay', function (req, res, next) {
         const amount = req.query.amount
 
         if(creditorIban == debtorIban){
-            res.status(400).send('format error: please verify creditor and debtor account IDs');
+            res.status(400)
+            res.render('error', {
+                error: 'Please verify creditor and debtor account IDs are correct',
+            })
         }
         else{
         boc_api.signPaymentRequest(creditorIban, debtorIban, amount, "SDK test payment", function (err, data) {
@@ -147,9 +162,13 @@ router.get('/pay', function (req, res, next) {
                     if (err) {
                         res.send(err)
                     } else {
-                        if(paymentId == null){
-                            res.status(400).send('format error: please verify creditor and debtor account IDs');
+                        if((typeof paymentResult.payment === "undefined")){
+                            res.status(400)
+                            res.render('error', {
+                                error: 'Please verify creditor and debtor account IDs are correct',
+                            })
                         }
+                        else{
                         console.log(paymentResult.payment.paymentId)
                         boc_api.approvePayment(paymentResult.payment.paymentId, function (err, paymentAuthorizeResult) {
                             if (err) {
@@ -162,6 +181,7 @@ router.get('/pay', function (req, res, next) {
                                 // res.send(paymentAuthorizeResult)
                             }
                         })
+                    }
                     }
                 })
             }
@@ -212,7 +232,10 @@ router.get('/pay', function (req, res, next) {
 
 
     } else {
-        res.status(400).send('missing information')
+        res.status(400)
+        res.render('error', {
+            error: 'missing information',
+        })
     }
 
 })

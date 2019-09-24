@@ -7,16 +7,16 @@
 <hr>
 
 <div style="width: 100%; text-align: center">
-    <h1>Account details</h1>
-    <h2>Details for account: <%= account.accountId %> </h2>
+    <h2>Account details</h2>
+    <p><strong> Details for account with id: </strong> <%= account.accountId %> </p>
     
     <br>
     <br>
 
     <h3> Account balance </h3>
-    <h4> Currency: <%= account.currency %> </h4>
-    <h4> Available balance: <%= account.balances[0].amount %> </h4>
-    <h4> Current balance: <%= account.balances[1].amount %> </h4>
+    <p><strong> Currency: </strong> <%= account.currency %> </p>
+    <p><strong> Available balance:</strong> <%= account.balances[0].amount %> </p>
+    <p><strong> Current balance: </strong> <%= account.balances[1].amount %> </p>
 
     <br>
 
