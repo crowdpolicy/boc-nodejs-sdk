@@ -8,8 +8,8 @@ boc_api = {};
 API constants.
 */
 boc_api.base_api_url = "https://sandbox-apis.bankofcyprus.com/df-boc-org-sb/sb/psd2"
-boc_api.client_id = "9eb70bc5-f0b1-4da3-ae92-3fde2854e035"
-boc_api.client_secret = "G4oS6nY1fU5aW3wX0bQ8hR1uS5dP4rQ7rE6tS6aL4oA8sG0gC8"
+boc_api.client_id = process.env.CLIENT_ID
+boc_api.client_secret = process.env.CLIENT_SECRET
 boc_api.tppid = "singpaymentdata"   //leave it as is.
 boc_api.subStatus = {};
 
